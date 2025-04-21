@@ -1,1 +1,1 @@
-# PizzaHut.sql
+# PizzaHut Sales Data Analysis Using SQL
