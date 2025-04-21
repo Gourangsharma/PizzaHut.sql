@@ -5,12 +5,13 @@
 This project involves a comprehensive analysis of PizzaHut sales data using SQL. The goal is to extract valuable insights and answer various business questions based on the dataset. The following README provides a detailed account of the project's objectives, business problems, solutions, findings, and conclusions.
 
 ## Objectives
-Analyze the sales of pizzas of different catgory.
-Identify the top selling pizzas.
-List and analyze the sales data based on pricing,category and sales.
-Explore and find the best sellers and best selling time period.
+- Analyze the sales of pizzas of different catgory.
+- Identify the top selling pizzas.
+- List and analyze the sales data based on pricing,category and sales.
+- Explore and find the best sellers and best selling time period.
 
 ## Schema
+
 ```sql
 DROP TABLE IF EXISTS netflix;
 CREATE TABLE netflix
