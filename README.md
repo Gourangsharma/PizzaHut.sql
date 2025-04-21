@@ -1,6 +1,7 @@
 # PizzaHut Sales Data Analysis Using SQL
 ![Pizza_Hutlogo](https://github.com/Gourangsharma/PizzaHut.sql/blob/main/294_pizza_hut_new_logo.webp)
-Overview
+
+## Overview
 This project involves a comprehensive analysis of Netflix's movies and TV shows data using SQL. The goal is to extract valuable insights and answer various business questions based on the dataset. The following README provides a detailed account of the project's objectives, business problems, solutions, findings, and conclusions.
 
 Objectives
