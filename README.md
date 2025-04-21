@@ -10,8 +10,8 @@ Identify the top selling pizzas.
 List and analyze the sales data based on pricing,category and sales.
 Explore and find the best sellers and best selling time period.
 
-##Schema
-'''sql
+## Schema
+```sql
 DROP TABLE IF EXISTS netflix;
 CREATE TABLE netflix
 (
@@ -28,7 +28,7 @@ CREATE TABLE netflix
     listed_in    VARCHAR(250),
     description  VARCHAR(550)
 );
-'''sql
+```
 
 Business Problems and Solutions
 1. Count the Number of Movies vs TV Shows
