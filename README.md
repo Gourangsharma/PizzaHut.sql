@@ -40,125 +40,239 @@ SELECT
 FROM
     orders;
 ```
-### Objective: Determine the distribution of content types on Netflix.
 
-2. Find the Most Common Rating for Movies and TV Shows
-WITH RatingCounts AS (
-    SELECT 
-        type,
-        rating,
-        COUNT(*) AS rating_count
-    FROM netflix
-    GROUP BY type, rating
-),
-RankedRatings AS (
-    SELECT 
-        type,
-        rating,
-        rating_count,
-        RANK() OVER (PARTITION BY type ORDER BY rating_count DESC) AS rank
-    FROM RatingCounts
-)
+### 2.Calculate the total revenue generated from pizza sales.
+```sql
 SELECT 
-    type,
-    rating AS most_frequent_rating
-FROM RankedRatings
-WHERE rank = 1;
-Objective: Identify the most frequently occurring rating for each type of content.
-
-3. List All Movies Released in a Specific Year (e.g., 2020)
-SELECT * 
-FROM netflix
-WHERE release_year = 2020;
-Objective: Retrieve all movies released in a specific year.
-
-4. Find the Top 5 Countries with the Most Content on Netflix
-SELECT * 
+    ROUND(SUM(o.quantity * p.price), 2) total_revenue
 FROM
-(
-    SELECT 
-        UNNEST(STRING_TO_ARRAY(country, ',')) AS country,
-        COUNT(*) AS total_content
-    FROM netflix
-    GROUP BY 1
-) AS t1
-WHERE country IS NOT NULL
-ORDER BY total_content DESC
+    order_details o
+        JOIN
+    pizzas p ON o.pizza_id = p.pizza_id;
+```
+
+### 3.Identify the highest-priced pizza.
+```sql
+SELECT 
+    p.name Highest_priced_pizza, p1.price
+FROM
+    pizza_types p
+        JOIN
+    pizzas p1 ON p.pizza_type_id = p1.pizza_type_id
+ORDER BY p1.price DESC
+LIMIT 1;
+```
+```sql
+SELECT 
+    p.name Highest_priced_pizza, p1.price
+FROM
+    pizza_types p
+        JOIN
+    pizzas p1 ON p.pizza_type_id = p1.pizza_type_id
+WHERE
+    price >= (SELECT 
+            MAX(price)
+        FROM
+            pizzas);
+```
+
+
+### 4.Identify the most common pizza size ordered.
+```sql
+SELECT 
+    p.size size, COUNT(o.order_details_id) total_orders
+FROM
+    pizzas p
+        JOIN
+    order_details o ON p.pizza_id = o.pizza_id
+GROUP BY p.size
+ORDER BY total_orders DESC
+LIMIT 1;
+```
+
+### 5. List the top 5 most ordered pizza types along with their quantities.
+```sql
+with cte as(SELECT 
+    p.pizza_type_id pizza_types, SUM(quantity) quantities
+FROM
+    order_details o
+        JOIN
+    pizzas p ON o.pizza_id = p.pizza_id
+GROUP BY p.pizza_type_id)
+
+SELECT 
+    p.name, quantities
+FROM
+    cte c
+        JOIN
+    pizza_types p ON c.pizza_types = p.pizza_type_id
+ORDER BY quantities DESC
 LIMIT 5;
-Objective: Identify the top 5 countries with the highest number of content items.
+```
 
-5. Identify the Longest Movie
+### 6.Join the necessary tables to find the total quantity of each pizza category ordered.
+```sql
 SELECT 
-    *
-FROM netflix
-WHERE type = 'Movie'
-ORDER BY SPLIT_PART(duration, ' ', 1)::INT DESC;
-Objective: Find the movie with the longest duration.
+    p1.category, SUM(o.quantity) quantity
+FROM
+    order_details o
+        JOIN
+    pizzas p ON o.pizza_id = p.pizza_id
+        JOIN
+    pizza_types p1 ON p.pizza_type_id = p1.pizza_type_id
+GROUP BY p1.category
+ORDER BY quantity DESC;
+```
 
-6. Find Content Added in the Last 5 Years
-SELECT *
-FROM netflix
-WHERE TO_DATE(date_added, 'Month DD, YYYY') >= CURRENT_DATE - INTERVAL '5 years';
-Objective: Retrieve content added to Netflix in the last 5 years.
-
-7. Find All Movies/TV Shows by Director 'Rajiv Chilaka'
-SELECT *
-FROM (
-    SELECT 
-        *,
-        UNNEST(STRING_TO_ARRAY(director, ',')) AS director_name
-    FROM netflix
-) AS t
-WHERE director_name = 'Rajiv Chilaka';
-Objective: List all content directed by 'Rajiv Chilaka'.
-
-8. List All TV Shows with More Than 5 Seasons
-SELECT *
-FROM netflix
-WHERE type = 'TV Show'
-  AND SPLIT_PART(duration, ' ', 1)::INT > 5;
-Objective: Identify TV shows with more than 5 seasons.
-
-9. Count the Number of Content Items in Each Genre
+### 7.Determine the distribution of orders by hour of the day.
+```sql
 SELECT 
-    UNNEST(STRING_TO_ARRAY(listed_in, ',')) AS genre,
-    COUNT(*) AS total_content
-FROM netflix
-GROUP BY 1;
-Objective: Count the number of content items in each genre.
+    HOUR(order_time) hour, COUNT(order_id) orders
+FROM
+    orders
+GROUP BY hour
+ORDER BY hour ASC;
+```
 
-10.Find each year and the average numbers of content release in India on netflix.
-return top 5 year with highest avg content release!
+### 8.Join relevant tables to find the category-wise distribution of pizzas.
+```sql
+SELECT 
+    category, COUNT(name) Total_pizzas
+FROM
+    pizza_types
+GROUP BY category
+ORDER BY Total_pizzas DESC;
+```
+
+### 9.Group the orders by date and calculate the average number of pizzas ordered per day.
+```sql
+SELECT 
+    ROUND(AVG(quantity), 0) average_orders_per_day
+FROM
+    (SELECT 
+        o.order_date, SUM(o1.quantity) quantity
+    FROM
+        orders o
+    JOIN order_details o1 ON o.order_id = o1.order_id
+    GROUP BY o.order_date) o;
+```
+
+### 10. Determine the top 3 most ordered pizza types based on revenue.
+```sql
+with cte as(SELECT 
+    p.pizza_type_id pizza_types,
+    SUM(o.quantity * p.price) revenue
+FROM
+    order_details o
+        JOIN
+    pizzas p ON o.pizza_id = p.pizza_id
+GROUP BY p.pizza_type_id)
 
 SELECT 
-    country,
-    release_year,
-    COUNT(show_id) AS total_release,
-    ROUND(
-        COUNT(show_id)::numeric /
-        (SELECT COUNT(show_id) FROM netflix WHERE country = 'India')::numeric * 100, 2
-    ) AS avg_release
-FROM netflix
-WHERE country = 'India'
-GROUP BY country, release_year
-ORDER BY avg_release DESC
-LIMIT 5;
-Objective: Calculate and rank years by the average number of content releases by India.
+    p.name, revenue
+FROM
+    cte c
+        JOIN
+    pizza_types p ON c.pizza_types = p.pizza_type_id
+ORDER BY revenue DESC
+LIMIT 3;
+```
 
-11. List All Movies that are Documentaries
-SELECT * 
-FROM netflix
-WHERE listed_in LIKE '%Documentaries';
-Objective: Retrieve all movies classified as documentaries.
+### 11.Calculate the percentage contribution of each pizza type to total revenue.
+```sql
+SELECT 
+    p1.category,
+    ROUND(((SUM(o.quantity * p.price)) / (SELECT 
+                    (SUM(o.quantity * p.price))
+                FROM
+                    order_details o
+                        JOIN
+                    pizzas p ON o.pizza_id = p.pizza_id)) * 100,
+            2) percentage_revenue
+FROM
+    pizza_types p1
+        JOIN
+    pizzas p ON p1.pizza_type_id = p.pizza_type_id
+        JOIN
+    order_details o ON o.pizza_id = p.pizza_id
+GROUP BY p1.category
+ORDER BY percentage_revenue DESC;
+```
+```sql
+with cte as(SELECT 
+    ROUND(((SUM(o.quantity * p.price)) / (SELECT 
+                    (SUM(o.quantity * p.price)) total_revenue
+                FROM
+                    order_details o
+                        JOIN
+                    pizzas p ON o.pizza_id = p.pizza_id)) * 100,
+            2) percentage_revenue,
+    p.pizza_type_id pizza_types
+FROM
+    order_details o
+        JOIN
+    pizzas p ON o.pizza_id = p.pizza_id
+GROUP BY p.pizza_type_id)
 
-12. Find All Content Without a Director
-SELECT * 
-FROM netflix
-WHERE director IS NULL;
-Objective: List content that does not have a director.
+SELECT 
+    p.name, percentage_revenue
+FROM
+    cte c
+        JOIN
+    pizza_types p ON c.pizza_types = p.pizza_type_id
+ORDER BY percentage_revenue DESC
+```
 
-13. Find How Many Movies Actor 'Salman Khan' Appeared in the Last 10 Years
-SELECT * 
-FROM netflix
-WHERE casts LIKE '%Salman Khan%'
-  AND release_year > EXTRACT(YEAR FROM CURRENT_DATE) - 10;
+### 12.Analyze the cumulative revenue generated over time.
+```sql
+SELECT order_date, SUM(revenue) over (order by order_date) cummulative_revenue
+FROM
+(SELECT 
+    o.order_date, ROUND(SUM(o1.quantity * p.price), 2) revenue
+FROM
+    order_details o1
+        JOIN
+    pizzas p ON o1.pizza_id = p.pizza_id
+        JOIN
+    orders o ON o1.order_id = o.order_id
+GROUP BY o.order_date) as s;
+```
+
+### 13.Determine the top 3 most ordered pizza types based on revenue for each pizza category.
+```sql
+with cte as
+(select category ,name ,revenue, rank() over (partition by category order by revenue desc) as rn
+from
+(SELECT 
+    p1.category,
+    p1.name,
+    ROUND(SUM(o.quantity * p.price), 2) revenue
+FROM
+    pizza_types p1
+        JOIN
+    pizzas p ON p1.pizza_type_id = p.pizza_type_id
+        JOIN
+    order_details o ON o.pizza_id = p.pizza_id
+GROUP BY p1.category , p1.name) as s)
+
+SELECT 
+    category, name, revenue
+FROM
+    cte
+WHERE
+    rn <= 3;
+```
+
+## Findings and Conclusion
+- Content Distribution: The dataset contains a diverse range of pizzas with varying prices and categories.
+- Common Ratings: Insights into the most common orders provide an understanding of the pizza's target audience.
+- Categorization: Categorizing Pizzas based on specific keywords helps in understanding the types of pizzas available on PizzaHut.
+- This analysis provides a comprehensive view of PizzaHut's pizzas and can help inform content strategy and decision-making.
+
+## Author - Gourang Sharma
+This project is a part of my portfolio, showcasing the SQL skills essential for data analyst roles.
+
+## Thank You
+
+
+
