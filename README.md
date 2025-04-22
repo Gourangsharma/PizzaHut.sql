@@ -33,13 +33,14 @@ CREATE TABLE order_details (
 
 ## Business Problems and Solutions
 
-### 1. Count the Number of Movies vs TV Shows
+### 1. Retrieve the total number of orders placed.
+```sql
 SELECT 
-    type,
-    COUNT(*)
-FROM netflix
-GROUP BY 1;
-Objective: Determine the distribution of content types on Netflix.
+    COUNT(order_id) total_orders
+FROM
+    orders;
+```
+### Objective: Determine the distribution of content types on Netflix.
 
 2. Find the Most Common Rating for Movies and TV Shows
 WITH RatingCounts AS (
