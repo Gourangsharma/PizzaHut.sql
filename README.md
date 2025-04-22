@@ -62,6 +62,7 @@ FROM
 ORDER BY p1.price DESC
 LIMIT 1;
 ```
+### Alternate Solution
 ```sql
 SELECT 
     p.name Highest_priced_pizza, p1.price
@@ -198,6 +199,7 @@ FROM
 GROUP BY p1.category
 ORDER BY percentage_revenue DESC;
 ```
+### Alternate Solution
 ```sql
 with cte as(SELECT 
     ROUND(((SUM(o.quantity * p.price)) / (SELECT 
